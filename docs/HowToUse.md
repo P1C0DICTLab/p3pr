@@ -1,74 +1,52 @@
-# P3PR7 使用教程
+# P3PR7 User Guide
+**Version**: 7.0
+**Status**: Stable
+**Target Users**: Python developers who need to generate HTML files for 3D point cloud visualization
 
-**版本**：7.0  
-**状态**：稳定  
-**适用对象**：需要生成 3D 点云可视化 HTML 文件的 Python 开发者  
+## 1. Introduction
+`p3pr7` is a lightweight Python library for constructing 3D point cloud scenes and exporting them as **standalone HTML files** with no external servers or dependencies required. It is built on the brand-new **3PR Viewer Rendering Engine (v7)**. Key improvements are as follows:
+- **Fully Embedded Data-Driven**: The viewer reads all configurations and point data entirely from `window.__EMBEDDED_DATA__` and sends no network requests (no more loading of `data.json`), making it ideal for offline use or embedded distribution.
+- **Robust Degraded Rendering**: If data injection fails (e.g., placeholder not replaced), the viewer still renders an empty scene (background + coordinate axes) instead of a blank black screen, simplifying debugging.
+- **More Compact Output**: All data is injected into HTML in one JSON string, eliminating extra auxiliary files.
+- Full backward compatibility with legacy features: rich point styles, hover metadata display, interactive controls (rotate/zoom/pan/keyboard shortcuts), and scene configuration (title, background, camera, axes, legend).
 
----
+**Design Philosophy**: It follows the style of Plotly, enabling quick visualization results via simple Python interfaces, while offering advanced users flexibility for custom templates.
 
-## 1. 简介
+## 2. Installation
+`p3pr7` is a single-file library with zero extra dependencies—only Python standard libraries are used: `json`, `numbers`, `webbrowser`, `tempfile`, `os`.
 
-`p3pr7` 是一个轻量级的 Python 库，用于构建 3D 点云场景并导出为**独立的 HTML 文件**，无需任何外部服务器或依赖。它基于全新的 **3PR 查看器渲染引擎（v7）**，核心改进如下：
+### File Acquisition
+Place `p3pr7.py` into your project directory, then import it with `import p3pr7`.
 
-- **纯嵌入数据驱动**：查看器完全从 `window.__EMBEDDED_DATA__` 读取配置和点数据，不发起任何网络请求（不再加载 `data.json`），适合离线或内嵌分发。
-- **健壮的降级显示**：即便数据注入失败（如占位符未替换），查看器仍能绘制空场景（背景 + 坐标轴），而非直接黑屏，便于调试。
-- **更紧凑的输出**：数据通过 JSON 字符串一次性注入 HTML，无需额外文件。
-- 支持所有前序功能：丰富的点样式、元数据悬停展示、交互控制（旋转/缩放/平移/键盘）、场景配置（标题、背景、相机、坐标轴、图例）。
+**Note**: The `p3pr7.py` file embeds the complete viewer HTML code out of the box. The HTML template contains a placeholder `__DATA_PLACEHOLDER__`, which will be replaced with actual data during export.
 
-**设计理念**：延续 `plotly` 风格，通过简单的 Python 接口快速生成可视化结果，同时为高级用户提供自定义模板的灵活性。
-
----
-
-## 2. 安装
-
-`p3pr7` 是一个单文件库，无需额外依赖（仅使用 Python 标准库 `json`, `numbers`, `webbrowser`, `tempfile`, `os`）。
-
-### 获取文件
-
-将 `p3pr7.py` 放置到您的项目目录中，或通过 `import p3pr7` 使用。
-
-**注意**：`p3pr7.py` 已内嵌完整的查看器 HTML 代码，开箱即用。HTML 模板中包含占位符 `__DATA_PLACEHOLDER__`，导出时会被替换为实际数据。
-
----
-
-## 3. 快速开始
-
-### 3.1 最简示例
-
+## 3. Quick Start
+### 3.1 Minimal Example
 ```python
 import p3pr7
-
-# 1. 创建场景
-scene = p3pr7.Scene(title="我的第一个点云")
-
-# 2. 添加一些点
-scene.add_point([0, 0, 0], color="#ffffff", size=8, meta={"id": "原点"})
-scene.add_point([3, 2, 1], color="#ff8800", size=10, meta={"类别": "A"})
-scene.add_point([-2, 4, -1], color="#00ccff", size=6, shape="square", meta={"类别": "B"})
-
-# 3. 生成并打开 HTML
-scene.show()   # 自动在浏览器中打开临时文件
+# 1. Create a scene
+scene = p3pr7.Scene(title="My First Point Cloud")
+# 2. Add individual points
+scene.add_point([0, 0, 0], color="#ffffff", size=8, meta={"id": "Origin"})
+scene.add_point([3, 2, 1], color="#ff8800", size=10, meta={"Category": "A"})
+scene.add_point([-2, 4, -1], color="#00ccff", size=6, shape="square", meta={"Category": "B"})
+# 3. Generate and open HTML
+scene.show()   # Automatically opens a temporary file in the default browser
 ```
 
-### 3.2 批量添加点
-
+### 3.2 Batch Add Points
 ```python
 points_data = [
-    {"pos": [5, 0, 0], "color": "#ff8800", "size": 7, "meta": {"类别": "A"}},
-    {"pos": [0, 5, 0], "color": "#00ccff", "size": 9, "meta": {"类别": "B"}},
-    {"pos": [0, 0, 5], "color": "#ff33cc", "size": 8, "meta": {"类别": "C"}},
+    {"pos": [5, 0, 0], "color": "#ff8800", "size": 7, "meta": {"Category": "A"}},
+    {"pos": [0, 5, 0], "color": "#00ccff", "size": 9, "meta": {"Category": "B"}},
+    {"pos": [0, 0, 5], "color": "#ff33cc", "size": 8, "meta": {"Category": "C"}},
 ]
 scene.add_points(points_data)
 ```
 
----
-
-## 4. 核心 API 详解
-
-### 4.1 类 `Scene`
-
-构造方法：
-
+## 4. Core API Reference
+### 4.1 Class `Scene`
+Constructor signature:
 ```python
 Scene(
     title: Optional[str] = None,
@@ -78,111 +56,100 @@ Scene(
     legend: Optional[List[Dict[str, str]]] = None
 )
 ```
+- `title`: Header text displayed at the top of the page
+- `background`: CSS color string, e.g., `'#1a1a2e'`
+- `camera`: Dictionary containing `distance`, `theta`, `phi`, `target` (all numeric values)
+- `axis`: Axis configuration dictionary, including sub-dicts `x`, `y`, `z` (each with `label`, `color`), plus `enabled`, `leftHanded`, `length`
+- `legend`: Legend entry list; each entry follows the format `{'label': str, 'color': str}`
 
-- `title`：显示在页面顶部的标题。
-- `background`：CSS 颜色字符串，如 `'#1a1a2e'`。
-- `camera`：字典，包含 `distance`, `theta`, `phi`, `target`（均为数值）。
-- `axis`：坐标轴配置，含 `enabled`, `x`, `y`, `z` 子字典（含 `label`, `color`），`leftHanded`, `length`。
-- `legend`：图例列表，每项为 `{'label': str, 'color': str}`。
-
-### 4.2 配置方法
-
+### 4.2 Layout Configuration Methods
 #### `set_title(title: str)`
-设置页面标题。
+Set the page header title.
 
 #### `set_background(color: str)`
-设置背景色（支持十六进制 `#rrggbb` 或 `#rgb`）。
+Set background color (supports hex formats `#rrggbb` or `#rgb`).
 
 #### `set_camera(distance, theta, phi, target)`
-设置相机初始状态：
-- `distance`：观察距离。
-- `theta`：水平角度（弧度）。
-- `phi`：垂直角度（弧度，范围 -π/2 ~ π/2）。
-- `target`：观察焦点坐标 `[x, y, z]`。
+Configure initial camera state:
+- `distance`: Viewing distance from the target
+- `theta`: Horizontal rotation angle (radians)
+- `phi`: Vertical rotation angle (radians, range: -π/2 ~ π/2)
+- `target`: Focus point coordinate `[x, y, z]`
 
 #### `set_axis(enabled, x_label, y_label, z_label, x_color, y_color, z_color, left_handed, length)`
-配置坐标轴：
-- `enabled`：是否显示坐标轴（默认 `True`）。
-- 各轴标签和颜色。
-- `left_handed`：是否为左手坐标系（默认 `False`，即右手系）。
-- `length`：轴线长度（默认 500）。
+Configure coordinate axes:
+- `enabled`: Toggle axis visibility (default: `True`)
+- Axis labels and corresponding colors for X/Y/Z
+- `left_handed`: Enable left-handed coordinate system (default: `False`, right-handed)
+- `length`: Length of axis lines (default: 500)
 
 #### `add_legend(label, color)`
-添加一个图例项（可多次调用）。
+Append a single legend entry (can be called multiple times).
 
 #### `set_legend(legend_list)`
-直接设置整个图例列表（覆盖之前的内容）。
+Overwrite the full legend list with provided entries.
 
 #### `update_layout(**kwargs)`
-灵活更新配置，支持 `title`, `background`, `camera`, `axis`, `legend`。对于 `camera` 和 `axis`，会进行字典合并，而非完全覆盖。
+Flexibly update scene configurations. Supports `title`, `background`, `camera`, `legend`, `axis`. For `camera` and `axis`, new dictionaries are merged with existing settings instead of full replacement.
 
-示例：
+Example:
 ```python
 scene.update_layout(
-    title="新标题",
+    title="New Title",
     background="#222244",
     camera={"distance": 40, "theta": 0.8},
-    axis={"enabled": False}   # 关闭坐标轴
+    axis={"enabled": False}   # Hide coordinate axes
 )
 ```
 
-### 4.3 点操作方法
-
+### 4.3 Point Manipulation Methods
 #### `add_point(pos, color=None, size=1.0, shape='circle', meta=None)`
-添加单个点：
-- `pos`：`[x, y, z]` 坐标。
-- `color`：颜色，支持十六进制字符串 `'#ff8800'` 或 RGB 元组 `(1.0, 0.5, 0.0)` 或 `(255, 128, 0)`。默认白色。
-- `size`：像素大小。
-- `shape`：可选 `'circle'`, `'square'`, `'triangle'`, `'diamond'`, `'star'`, `'cross'`。
-- `meta`：字典，用于存储附加信息（悬停时显示）。
+Add a single point:
+- `pos`: Coordinate `[x, y, z]`
+- `color`: Point color; accepts hex strings `'#ff8800'`, RGB tuples `(1.0, 0.5, 0.0)` or `(255, 128, 0)`. Defaults to white.
+- `size`: Pixel size of the point
+- `shape`: Available options: `'circle'`, `'square'`, `'triangle'`, `'diamond'`, `'star'`, `'cross'`
+- `meta`: Dictionary storing custom metadata, displayed on mouse hover
 
 #### `add_points(points_data)`
-批量添加点，支持两种格式：
-1. **字典列表**：每项包含 `pos`, `color`, `size`, `shape`, `meta`（后四项可选）。
-2. **元组/列表列表**：每项为 `(pos, color, size, shape, meta)`，其中 `pos` 必填，其余可选。
+Batch add multiple points; supports two input formats:
+1. List of dictionaries: Each entry contains `pos`, with optional `color`, `size`, `shape`, `meta`
+2. List of tuples/lists: Each entry follows `(pos, color, size, shape, meta)`; only `pos` is mandatory
 
-### 4.4 导出方法
-
+### 4.4 Export Methods
 #### `to_dict() -> Dict`
-返回符合查看器规范的完整数据结构（包含 `config` 和 `testPoints`）。
+Return a complete structured dataset compliant with viewer specifications (contains `config` and `testPoints` fields).
 
 #### `to_json(compact=True, **kwargs) -> str`
-输出 JSON 字符串。`compact=True` 时无多余空格。
+Output JSON string. `compact=True` removes redundant whitespace for minimized output.
 
 #### `save_json(filename, compact=True, **kwargs)`
-保存 JSON 到文件。
+Write JSON data to a local file.
 
 #### `write_html(filename, open_browser=False)`
-生成独立的 HTML 文件。内部会将 `to_json()` 的结果替换模板中的 `__DATA_PLACEHOLDER__`，生成一个完全自包含的页面。
+Generate a fully self-contained HTML file. Internally, it replaces the `__DATA_PLACEHOLDER__` marker in the template with the output of `to_json()`.
 
 #### `show()`
-生成临时 HTML 文件并在默认浏览器中打开（类似 `plotly.show()`）。
+Generate a temporary HTML file and open it in the default browser (consistent with Plotly’s `show()` behavior).
 
----
+## 5. Color Format Specification
+All color parameters accept the following formats, which are internally converted to compact `#rrggbb` hex strings:
 
-## 5. 颜色格式详解
+| Format | Example | Description |
+|--------|---------|-------------|
+| Short hex | `'#f80'` | Automatically expanded to `#ff8800` |
+| Full hex | `'#ff8800'` | Used as-is |
+| 0~1 RGB tuple | `(1.0, 0.5, 0.0)` | Scaled to 0–255 range |
+| 0~255 RGB tuple | `(255, 128, 0)` | Directly applied |
+| List format | `[1.0, 0.5, 0.0]` or `[255, 128, 0]` | Identical behavior to tuples |
 
-所有颜色参数统一支持以下格式，内部会转换为紧凑的 `#rrggbb` 字符串：
-
-| 格式 | 示例 | 说明 |
-|------|------|------|
-| 十六进制短码 | `'#f80'` | 自动扩展为 `#ff8800` |
-| 十六进制长码 | `'#ff8800'` | 原样保留 |
-| 0~1 RGB 元组 | `(1.0, 0.5, 0.0)` | 映射到 0~255 |
-| 0~255 RGB 元组 | `(255, 128, 0)` | 直接使用 |
-| 列表 | `[1.0, 0.5, 0.0]` 或 `[255, 128, 0]` | 同上 |
-
----
-
-## 6. 完整示例
-
+## 6. Full Working Example
 ```python
 import p3pr7
 import random
-
-# 创建场景
+# Initialize scene
 scene = p3pr7.Scene(
-    title="3D 点云示例",
+    title="3D Point Cloud Demo",
     background="#0a0a1a",
     camera={"distance": 30, "theta": 0.2, "phi": 0.6, "target": [0, 0, 0]},
     axis={
@@ -193,13 +160,11 @@ scene = p3pr7.Scene(
         "length": 400
     }
 )
-
-# 添加图例
-scene.add_legend("类别 A", "#ff8800")
-scene.add_legend("类别 B", "#00ccff")
-scene.add_legend("类别 C", "#ff33cc")
-
-# 生成随机点云
+# Add legend entries
+scene.add_legend("Category A", "#ff8800")
+scene.add_legend("Category B", "#00ccff")
+scene.add_legend("Category C", "#ff33cc")
+# Generate random point cloud
 for i in range(100):
     x = random.uniform(-10, 10)
     y = random.uniform(-10, 10)
@@ -211,98 +176,85 @@ for i in range(100):
         color=color,
         size=random.uniform(4, 12),
         shape=random.choice(["circle", "square", "triangle"]),
-        meta={"类别": category, "值": round(random.random(), 2)}
+        meta={"Category": category, "Value": round(random.random(), 2)}
     )
-
-# 生成并打开
+# Export HTML and auto-open
 scene.write_html("output.html", open_browser=True)
 ```
 
----
-
-## 7. 高级技巧
-
-### 7.1 自定义点元数据
-您可以在 `meta` 中存放任意键值对，悬停时自动展示：
+## 7. Advanced Tips
+### 7.1 Custom Point Metadata
+Store arbitrary key-value pairs in `meta`; they will be displayed automatically when hovering over points:
 ```python
-scene.add_point([1,2,3], meta={"名称": "测量点", "温度": 23.5, "状态": "正常"})
+scene.add_point([1,2,3], meta={"Name": "Measurement Point", "Temperature": 23.5, "Status": "Normal"})
 ```
 
-### 7.2 动态更新场景
-在导出前可多次调用配置方法：
+### 7.2 Dynamic Scene Adjustment
+Repeatedly call configuration methods before export to modify scene settings:
 ```python
 scene.set_camera(distance=50)
-scene.set_axis(enabled=False)   # 临时隐藏坐标轴
+scene.set_axis(enabled=False)   # Temporarily hide axes
 scene.update_layout(background="#112233")
 ```
 
-### 7.3 仅导出 JSON（非 HTML）
-如果您想使用其他前端框架，可以仅导出 JSON：
+### 7.3 Export Raw JSON Only (Skip HTML)
+If integrating with custom frontend frameworks, export pure JSON data:
 ```python
 json_str = scene.to_json()
-# 或保存为文件
+# Or save JSON to disk
 scene.save_json("data.json")
 ```
 
-### 7.4 自定义 HTML 模板
-默认模板已内嵌在 `Scene._HTML_TEMPLATE` 中。若需替换（例如更换样式或调试），您可以：
-1. 修改源代码中的 `_HTML_TEMPLATE` 类变量。
-2. 或者在调用 `write_html` 前，将新模板字符串赋值给 `Scene._HTML_TEMPLATE`。
+### 7.4 Custom HTML Templates
+The default template is embedded as the class variable `Scene._HTML_TEMPLATE`. To customize styles or debug templates:
+1. Modify the `_HTML_TEMPLATE` variable directly in the source code
+2. Or overwrite the template string before calling `write_html()` by assigning a new value to `Scene._HTML_TEMPLATE`
 
-**注意**：自定义模板中**必须**包含占位符 `__DATA_PLACEHOLDER__`，否则数据无法注入。
+**Important Note**: Custom templates **must retain the placeholder `__DATA_PLACEHOLDER__`**, otherwise data injection will fail.
 
----
+## 8. Frequently Asked Questions (FAQ)
+**Q: No points render on the page after calling `scene.show()`?**
+A: Verify two points: 1) Points were successfully added to the scene; 2) The `_HTML_TEMPLATE` inside `p3pr7.py` contains the `__DATA_PLACEHOLDER__` marker. If the template is corrupted, data injection breaks.
 
-## 8. 常见问题 (FAQ)
+**Q: The browser console throws `__DATA_PLACEHOLDER__ is not defined` when opening the HTML file directly, but background and axes still render. Is this expected?**
+A: Yes, this is normal behavior. The new viewer adopts a "render-first, inject-later" pipeline. Even if the placeholder is not replaced (e.g., opening the raw template file manually), the viewer initializes the empty scene with axes and retains full interactivity to simplify template debugging. In standard usage via the p3pr7 library, the placeholder is correctly substituted, so this error will not appear.
 
-**Q：为什么我运行 `scene.show()` 后页面没有显示点？**  
-A：请检查点数据是否添加成功，以及 `p3pr7.py` 源文件中 `_HTML_TEMPLATE` 是否包含 `__DATA_PLACEHOLDER__` 占位符。若模板被错误修改，将导致注入失败。
+**Q: How to hide coordinate axes?**
+A: Call `scene.set_axis(enabled=False)` or `scene.update_layout(axis={"enabled": False})`.
 
-**Q：直接打开生成的 HTML 时，控制台报错 `__DATA_PLACEHOLDER__ is not defined`，但页面显示了背景和坐标轴，这是正常的吗？**  
-A：这是正常的。新版查看器采用“先渲染，后注入”的机制，即使数据占位符未被替换（例如您手动打开未替换的模板），查看器仍会绘制空场景（背景 + 坐标轴）并保持交互功能。此设计便于调试和模板开发。但在实际使用中，`p3pr7` 库会正确替换占位符，因此不会出现该报错。
+**Q: Does the library support short hex color codes like `#f80`?**
+A: Yes; short hex values are automatically expanded to full `#rrggbb` format internally.
 
-**Q：如何关闭坐标轴？**  
-A：使用 `scene.set_axis(enabled=False)` 或 `scene.update_layout(axis={"enabled": False})`。
+**Q: Can I interact with the viewer in the browser?**
+A: Full interaction support: Left mouse drag to rotate, mouse wheel to zoom, right mouse drag to pan, and WASDQE keyboard shortcuts to adjust the camera focus.
 
-**Q：颜色字符串 `#f80` 支持吗？**  
-A：支持，内部会自动扩展为 `#ff8800`。
+**Q: Do point sizes change with depth for perspective rendering?**
+A: The viewer dynamically adjusts point screen size based on depth to simulate natural perspective effects.
 
-**Q：能否在浏览器中旋转/缩放？**  
-A：可以，查看器支持鼠标左键旋转、滚轮缩放、右键平移，以及 WASDQE 键盘控制焦点。
+**Q: How to adjust the initial camera position?**
+A: Use `set_camera(distance, theta, phi)` or pass the `camera` dictionary parameter directly in the `Scene` constructor.
 
-**Q：点的大小是否随距离变化？**  
-A：查看器会自动根据深度调整点的屏幕大小，以模拟透视效果。
+**Q: Are HTML files generated by older versions compatible with the new viewer?**
+A: No. The new viewer only accepts data formatted as `{ config, testPoints }` injected via `__DATA_PLACEHOLDER__`. Regenerate HTML files using the latest p3pr7 library for compatibility.
 
-**Q：如何调整相机初始位置？**  
-A：通过 `set_camera(distance, theta, phi)` 设置，或直接在 `Scene` 构造时传入 `camera` 字典。
+## 9. Breaking Changes from Legacy Versions (p3pr5, p3pr6)
+- Upgraded viewer core: The new viewer relies entirely on embedded data and sends zero external network requests, making offline deployment far more reliable.
+- Improved fault tolerance: Empty scenes with axes render normally even if data injection fails, streamlining debugging workflows.
+- Standardized template placeholder: Unified marker `__DATA_PLACEHOLDER__` simplifies custom template tooling.
+- Fully backward-compatible Python APIs: All existing `Scene` class methods remain unchanged; upgrading only requires replacing the library file.
+- Minimized output size: Deprecated redundant legacy metadata compatibility logic for cleaner, smaller data payloads.
 
-**Q：旧版生成的 HTML 还能用新版查看器吗？**  
-A：不能。新版查看器仅接受 `{ config, testPoints }` 格式，且数据必须通过 `__DATA_PLACEHOLDER__` 注入。建议使用 `p3pr7` 重新生成。
+## 10. Technical Deep Dive: Data Injection Mechanism
+When `write_html()` executes, it follows these steps:
+1. Serialize the full scene dataset into compact JSON via `to_json(compact=True)`
+2. Load the built-in HTML template stored in `Scene._HTML_TEMPLATE`
+3. Replace all instances of the `__DATA_PLACEHOLDER__` marker in the template with the serialized JSON string
+4. Write the modified template to the target HTML file
 
----
-
-## 9. 与旧版（p3pr5,p3pr6）的区别
-
-- **查看器内核升级**：新版查看器完全依赖嵌入数据，不再发起任何外部请求，更适合离线环境。
-- **健壮性提升**：即使数据注入失败，页面仍能显示空场景（含坐标轴），方便调试。
-- **模板占位符标准化**：统一使用 `__DATA_PLACEHOLDER__`，生成工具只需替换该字符串即可。
-- **API 完全兼容**：所有 Python API（`Scene` 类及方法）保持不变，升级只需替换库文件。
-- **输出更紧凑**：移除了多余的 `metadata` 兼容逻辑，数据格式更纯净。
-
----
-
-## 10. 技术细节：数据注入原理
-
-生成 HTML 时，`write_html()` 会执行以下步骤：
-1. 调用 `to_json(compact=True)` 将场景数据序列化为紧凑 JSON 字符串。
-2. 读取 `Scene._HTML_TEMPLATE`（默认内置完整 HTML）。
-3. 将模板中的 `__DATA_PLACEHOLDER__` 替换为上述 JSON 字符串。
-4. 写入目标文件。
-
-查看器启动时，会执行以下操作：
+On page load, the embedded viewer runs this JavaScript snippet:
 ```javascript
 window.__EMBEDDED_DATA__ = __DATA_PLACEHOLDER__;
 ```
-若占位符被正确替换，`window.__EMBEDDED_DATA__` 将包含完整数据对象；若未替换（如直接打开模板文件），则会抛出 `ReferenceError`，但查看器核心渲染循环早已启动，会基于默认值绘制空场景。
+If the placeholder is substituted correctly, `window.__EMBEDDED_DATA__` holds the complete scene dataset. If unmodified (e.g., opening the raw template file), a `ReferenceError` will trigger, but the viewer’s main rendering loop already initializes and draws an empty scene with default axes and background.
 
-这一设计使得模板开发更加灵活，同时也保证了最终用户生成的 HTML 页面完全自包含、无外部依赖。
+This design balances flexible template development with fully self-contained, offline-capable output HTML files that require no external assets.
