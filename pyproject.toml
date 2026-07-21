@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "p3pr7"
+version = "7.0.1"
+authors = [{ name = "StarRingEngr", email = "3081613837@qq.com" }]
+description = "Lightweight 3D point cloud HTML visualizer based on 3PR viewer v7"
+requires-python = ">=3.8"
+
+[project.urls]
+Repository = "https://github.com/P1C0DICTLab/p3pr"
+
+[project.optional-dependencies]
+# 无第三方依赖，这里留空即可
